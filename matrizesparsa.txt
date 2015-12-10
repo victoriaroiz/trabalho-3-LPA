@@ -1,0 +1,220 @@
+﻿#include <stdio.h>
+#include <stdlib.h>
+
+/*
+    Victória Silva Roiz - 8955431
+    Ana Luiza Queiroz Oliveira - 8955598
+    Arthur Pinheiro Carolo - 8955560
+    Thiago Prudente Corrêa Balbo - 8955581
+*/
+
+#include<stdlib.h>
+#include<stdio.h>
+
+/*
+    Será implementado matriz esparsa com um nó cabeça pra cada linha e coluna
+*/
+
+#define HEADVALUE -1
+
+typedef struct node{
+    double valor;
+    double i;
+    double j;
+    struct node *right;
+    struct node *down;
+} no;
+
+no **linha;
+no **coluna;
+
+int checar(int m, int n, int i, int j){
+    if(i>=0 && j>=0 && i<m && j<n){
+        return 1;
+    }else{
+        printf("Valores fora do limite da matriz!\n");
+        return 0;
+    }
+}
+
+void initMatriz(int m, int n) {
+    int i;
+    linha = (no**)malloc(m*sizeof(no*));
+    for(i=0;i<m;i++){
+        linha[i] = (no*)malloc(1*sizeof(no));
+        linha[i]->valor = HEADVALUE;
+        linha[i]->i = 999999;
+        linha[i]->j = 999999;
+        linha[i]->right = linha[i];
+        linha[i]->down = linha[i];
+    }
+    coluna = (no**)malloc(n*sizeof(no*));
+    for(i=0;i<n;i++){
+        coluna[i] = (no*)malloc(1*sizeof(no));
+        coluna[i]->valor = HEADVALUE;
+        coluna[i]->i = 999999;
+        coluna[i]->j = 999999;
+        coluna[i]->right = coluna[i];
+        coluna[i]->down = coluna[i];
+    }
+}
+
+no* getNode(int i, int j){
+    //Busca pela linha
+    if(linha[i]->right == linha[i]){
+        return NULL;
+    }
+    no *aux = linha[i]->right;
+    while(aux != linha[i]){
+        if(aux->j == j){
+            return aux;
+        }
+        aux = aux->right;
+    }
+    return NULL;
+}
+
+double getValue(int i, int j){
+    no *aux = getNode(i,j);
+    if(aux!=NULL){
+        return aux->valor;
+    }else{
+        return 0;
+    }
+}
+
+void insertValue(int i, int j, double value){
+    // Inserir na linha
+    no *aux = getNode(i,j);
+    no *novo = NULL;
+    if(aux==NULL){ // se no nao existe insere novo no
+        novo = (no*)malloc(1*sizeof(no));
+        novo->valor = value;
+        novo->i = i;
+        novo->j = j;
+        novo->right = NULL;
+        novo->down = NULL;
+        // colocar na linha
+        aux = linha[i];
+        while(aux->right->j < j){
+            aux = aux->right;
+        }
+        novo->right = aux->right;
+        aux->right = novo;
+        //colocar na coluna
+        aux = coluna[j];
+        while(aux->down->i < i){
+            aux = aux->down;
+        }
+        novo->down = aux->down;
+        aux->down = novo;
+    }else{ //se ja existe o no , atualiza no
+        aux->valor = value;
+    }
+}
+
+void printMatrix(int m,int n){
+    int i,j;
+    for(i=0;i<m;i++){
+        for(j=0;j<n;j++){
+           printf("[%.2lf] ",getValue(i,j));
+        }
+        printf("\n");
+    }
+}
+
+// API PRINCIPAL
+
+void main(){
+	int m=0,n=0;
+    int op=0;
+	int loop=1; // Encerrar programa na opção sair
+	int opmenu=0;
+	int i,j;
+	double valor,soma;
+	no *aux;
+
+	while(loop == 1){
+		printf("\nMenu de opcoes:\n(1) Criar Matriz MxN\n(2) Excluir Matriz\n(3) Consultar Posicao IxJ\n(4) Consultar Soma de uma Linha\n(5) Consultar Soma de Uma coluna\n(6) Alterar um Valor na Posicao IxJ\n(7) Imprimir\n(8) Sair\n                Opcao Escolhida: ");
+		scanf("%d",&opmenu);
+		switch(opmenu){
+			case 1:
+			    printf("Digite um valor para M: ");
+				scanf("%d",&m);
+				printf("Digite um valor para N: ");
+				scanf("%d",&n);
+				//Inicializa matriz
+				initMatriz(m,n);
+				printf("Matriz gerada com Sucesso!\n");
+				break;
+			case 2:
+				for(i=0;i<m;i++){
+					while(linha[i]->right != linha[i]){
+                        aux = linha[i]->right->right;
+                        free(linha[i]->right);
+                        linha[i]->right = aux;
+					}
+				}
+				free(linha);
+				free(coluna);
+				linha = NULL;
+				coluna = NULL;
+				printf("Matriz excluida com Sucesso!\n");
+				break;
+			case 3:
+				printf("Digite um valor para I: ");
+				scanf("%d",&i);
+				printf("Digite um valor para J: ");
+				scanf("%d",&j);
+				if(checar(m,n,i,j)){
+                    printf("O valor lido em Mat[%d][%d] foi %lf \n",i,j,getValue(i,j));
+				}
+				break;
+			case 4:
+				printf("Digite o numero de uma linha para retornar a soma: ");
+				scanf("%d",&i);
+                if(checar(m,n,i,0)){
+                    soma=0;
+                    for(j=0;j<n;j++){
+                        soma = soma + getValue(i,j);
+                    }
+                    printf("A soma da linha %d eh %lf \n",i,soma);
+                }
+				break;
+			case 5:
+				printf("Digite o numero de uma coluna para retornar a soma: ");
+				scanf("%d",&j);
+                if(checar(m,n,0,j)){
+                    soma=0;
+                    for(i=0;i<m;i++){
+                        soma = soma + getValue(i,j);
+                    }
+                    printf("A soma da coluna %d eh %lf \n",j,soma);
+                }
+				break;
+			case 6:
+                printf("Digite um valor para I: ");
+				scanf("%d",&i);
+				printf("Digite um valor para J: ");
+				scanf("%d",&j);
+                if(checar(m,n,i,j)){
+                    printf("Digite um valor para inserir em Mat[%d][%d]: ",i,j);
+                    scanf("%lf",&valor);
+                    insertValue(i,j,valor);
+                    printf("Valor %lf inserido com sucesso em Mat[%d][%d]\n",valor,i,j);
+                }
+				break;
+            case 8:
+				loop =0;
+				break;
+            case 7:
+                if (linha == NULL || coluna == NULL){break;}
+                printMatrix(m,n);
+                break;
+			default:
+				printf("Opcao Invalida\n");
+				break;
+		}
+	}
+}
+
